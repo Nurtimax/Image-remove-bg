@@ -11,8 +11,6 @@ interface IBackgroundRemoverProps {
    setResultImage: React.Dispatch<React.SetStateAction<string[] | null>>
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
 const BackgroundRemover: FC<IBackgroundRemoverProps> = ({
    images,
    setResultImage
@@ -21,53 +19,31 @@ const BackgroundRemover: FC<IBackgroundRemoverProps> = ({
    const [loading, setLoading] = useState(false)
    const [error, setError] = useState<string | null>(null)
 
-   const handleProcessImages = async (image: File) => {
-      if (!image) return
+   const handleProcessImages = async () => {
+      if (!images || images.length === 0) return
 
       const formData = new FormData()
-      formData.append("images", image) // Append each image to FormData
+      images.forEach(file => {
+         formData.append("images", file) // Append each image to FormData
+      })
 
       setLoading(true)
       setError(null)
 
       try {
          const response = await axios.post(
-            "https://api.remove.bg/v1.0/removebg",
+            "https://server-tau-five-73.vercel.app/upload",
             formData,
             {
                headers: {
-                  "Content-Type": "multipart/form-data",
-                  "X-Api-Key": "ZgHuAH85KSd3Rwi43DUuoN3G" // Replace with your API key
-               },
-               responseType: "arraybuffer"
+                  "Content-Type": "multipart/form-data"
+               }
             }
          )
-
-         const blob = new Blob([response.data], {type: "image/png"})
-
-         console.log(blob)
 
          setProcessedImages(response.data)
       } catch (error) {
          setError("Error processing images.")
-         console.error("Error processing images:", error)
-      } finally {
-         setLoading(false)
-      }
-   }
-
-   const handleProcessImagesClick = async () => {
-      if (!images) return
-
-      setLoading(true)
-      setError(null)
-
-      try {
-         for (const file of images) {
-            await handleProcessImages(file)
-            await sleep(2000) // Пауза в 2 секунды между запросами
-         }
-      } catch (error) {
          console.error("Error processing images:", error)
       } finally {
          setLoading(false)
@@ -89,7 +65,7 @@ const BackgroundRemover: FC<IBackgroundRemoverProps> = ({
    return (
       <div className="mt-4">
          <button
-            onClick={handleProcessImagesClick}
+            onClick={handleProcessImages}
             disabled={loading}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-300"
          >
